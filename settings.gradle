@@ -1,3 +1,3 @@
 rootProject.name = 'pdfgen'
-include 'pdfgen-api', 'pdfgen-application', 'pdfgen-client'
+include 'pdfgen-application'
 

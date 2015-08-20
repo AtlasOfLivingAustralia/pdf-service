@@ -1,20 +1,17 @@
 package au.org.ala
 
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.dropwizard.Application
 import io.dropwizard.client.HttpClientBuilder
 import io.dropwizard.client.JerseyClientBuilder
-import io.dropwizard.db.DataSourceFactory
-import io.dropwizard.flyway.FlywayBundle
-import io.dropwizard.flyway.FlywayFactory
-import io.dropwizard.java8.Java8Bundle
-import io.dropwizard.jdbi.bundles.DBIExceptionsBundle
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
 import org.apache.http.client.HttpClient
 import org.eclipse.jetty.servlets.CrossOriginFilter
 import org.slf4j.LoggerFactory
+import au.org.ala.resources.KtPdfResource
 import au.org.ala.resources.PdfResource
+import au.org.ala.services.PdfService
+import io.dropwizard.forms.MultiPartBundle
 import java.util.*
 import javax.servlet.DispatcherType
 import javax.servlet.FilterRegistration
@@ -24,6 +21,11 @@ import kotlin.properties.Delegates
 
 
 import org.eclipse.jetty.servlets.CrossOriginFilter.*
+import org.glassfish.jersey.media.multipart.MultiPartFeature
+import org.glassfish.jersey.media.multipart.internal.FormDataParamInjectionFeature
+import org.glassfish.jersey.media.multipart.internal.MultiPartReaderClientSide
+import org.glassfish.jersey.media.multipart.internal.MultiPartReaderServerSide
+import org.glassfish.jersey.media.multipart.internal.MultiPartWriter
 
 public class PdfGen : Application<PdfGenConfiguration>() {
 
@@ -50,14 +52,9 @@ public class PdfGen : Application<PdfGenConfiguration>() {
     //var dao: DAO by Delegates.notNull()
 
     override public fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
+        log.info("Bootstrapping")
         super.initialize(bootstrap)
-//        bootstrap.getObjectMapper().registerModule(KotlinModule())
-//        bootstrap.addBundle(Java8Bundle())
-//        bootstrap.addBundle(DBIExceptionsBundle())
-//        bootstrap.addBundle(object : FlywayBundle<PdfGenConfiguration>() {
-//            override public fun getDataSourceFactory(configuration: PdfGenConfiguration) = configuration.dataSourceFactory
-//            override public fun getFlywayFactory(configuration: PdfGenConfiguration) = configuration.flywayFactory
-//        });
+        bootstrap.addBundle(MultiPartBundle());
     }
 
     override fun run(config: PdfGenConfiguration, environment: Environment) {
@@ -66,22 +63,21 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         val filter = environment.servlets().addFilter("CORSFilter", javaClass<CrossOriginFilter>())
 
         filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, environment.getApplicationContext().getContextPath() + "*");
-        filter.setInitParameter(ALLOWED_METHODS_PARAM, "GET,PUT,POST,OPTIONS");
+        filter.setInitParameter(ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
         filter.setInitParameter(ALLOWED_ORIGINS_PARAM, ALLOWED_ORIGINS);
         filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept");
         filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true");
 
-        val httpClient: HttpClient = HttpClientBuilder(environment).using(config.getHttpClientConfiguration()).build("httpClient")
-        environment.jersey().register(PdfResource(httpClient, config.sofficePath, config.storageDir));
+        val httpClient: HttpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
+        val service = PdfService(config.unoconvPath, config.storageDir)
+        //environment.jersey().register(KtPdfResource(httpClient, service))
+        environment.jersey().register(PdfResource(httpClient, service))
 
     }
 
     fun shutdown(vararg args: String) {
-        log.info("Stopping walter dropwizard")
+        log.info("Stopping pdfgen dropwizard")
         log.debug("Got args ${args.joinToString(",")}")
-//        log.info("Closing database")
-//        dao.close()
-//        log.info("Closed database")
 
         log.info("Stopping admin context")
         environment.getAdminContext().stop()

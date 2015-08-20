@@ -10,6 +10,7 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.2'
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
     }
 }
 
@@ -27,9 +28,6 @@ allprojects {
         jcenter()
         mavenLocal()
         mavenCentral()
-//        maven {
-//            url "http://52north.org/maven/repo/releases"
-//        }
     }
 
     dependencies {
@@ -38,32 +36,17 @@ allprojects {
   
 }
 
-project(':pdfgen-api') {
-    dependencies {
-        compile('com.fasterxml.jackson.module:jackson-module-kotlin:2.5.3.1')
-    }
-}
-
 project(':pdfgen-application') {
     dependencies {
-        compile project(':pdfgen-api')
         compile "io.dropwizard:dropwizard-core:$dropwizardVersion"
-//        compile "io.dropwizard:dropwizard-jdbi:$dropwizardVersion"
         compile "io.dropwizard:dropwizard-client:$dropwizardVersion"
-//        compile "io.dropwizard.modules:dropwizard-java8:0.8.0-2"
-//        compile "io.dropwizard.modules:dropwizard-java8-jdbi:0.8.0-2"
-//        compile "io.dropwizard.modules:dropwizard-flyway:0.8.0-2"
-//        compile('com.fasterxml.jackson.module:jackson-module-kotlin:2.5.3.1') {
-//            exclude group: 'com.fasterxml.jackson.core'
-//        }
-//        compile 'org.postgresql:postgresql:9.4-1201-jdbc41'
-//        compile 'org.postgis:postgis-jdbc:2.1.3'
+        compile "io.dropwizard:dropwizard-forms:$dropwizardVersion"
     }
 }
-
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'docker'
 
 mainClassName = 'au.org.ala.PdfGen'
 
@@ -71,7 +54,7 @@ def devconfig = 'devconfig.yml'
 
 run { args 'server', devconfig }
 
--dependencies {
+dependencies {
     compile project(':pdfgen-application')
 }
 
@@ -81,4 +64,28 @@ shadowJar {
     exclude 'META-INF/*.DSA'
     exclude 'META-INF/*.RSA'
     mergeServiceFiles()
+}
+
+docker {
+    baseImage "phusion/baseimage:0.9.17"
+    maintainer 'Simon Bear "simon.bear@csiro.au"'
+}
+
+task pdfgenDocker(type: Docker) {
+    dependsOn 'shadowJar'
+    applicationName = "pdfgen"
+    defaultCommand = ['/sbin/my_init']
+    exposePort 9090
+//    runCommand 'apt-add-repository -y ppa:libreoffice/libreoffice-5-0'
+    runCommand 'apt-get update && apt-get install -y openjdk-7-jre-headless && apt-get install -y libreoffice unoconv xfonts-mathml fonts-dejavu fonts-sil-gentium-basic fonts-sil-gentium fonts-liberation --no-install-recommends --no-install-suggests'
+    runCommand 'mkdir /etc/service/pdfgen'
+    runCommand 'mkdir /etc/service/soffice'
+    runCommand 'mkdir -p /var/lib/pdfgen'
+    runCommand 'mkdir -p /opt/pdfgen'
+    runCommand 'mkdir -p /etc/pdfgen'
+    addFile 'image/pdfgen.sh', '/etc/service/pdfgen/run'
+    addFile 'image/soffice.sh', '/etc/service/soffice/run'
+    addFile "build/libs/pdfgen-$version-all.jar", '/opt/pdfgen/pdfgen.jar'
+    addFile 'image/config.yml', '/etc/pdfgen/config.yml'
+    runCommand 'apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'
 }
