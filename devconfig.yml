@@ -1,0 +1,32 @@
+sofficePath: /usr/bin/soffice
+storageDir: /home/simon/dev/tmp/pdfs
+
+server:
+  type: simple
+#  rootPath: /api
+  applicationContextPath: /api
+  adminContextPath: /admin
+  connector:
+    type: http
+    port: 9090
+
+logging:
+  level: INFO
+  loggers:
+    io.dropwizard: INFO
+    rcd.hivews: INFO
+    #rcd.hivews.jdbi: DEBUG
+    #org.skife.jdbi.v2: TRACE
+    metrics: OFF
+  appenders:
+    - type: console
+      threshold: ALL
+      timeZone: UTC
+      target: stdout
+
+metrics:
+  frequency: 30 minutes
+  reporters:
+    - type: log
+      logger: metrics
+      markerName: marker
