@@ -52,7 +52,7 @@ public class PdfGen : Application<PdfGenConfiguration>() {
     //var dao: DAO by Delegates.notNull()
 
     override public fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
-        log.info("Bootstrapping")
+        log.info("Initialising")
         super.initialize(bootstrap)
         bootstrap.addBundle(MultiPartBundle());
     }

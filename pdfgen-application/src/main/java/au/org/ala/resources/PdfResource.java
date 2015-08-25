@@ -49,6 +49,7 @@ public class PdfResource {
 
                 return Response.status(Response.Status.MOVED_PERMANENTLY).location(info.getBaseUriBuilder().path(hash).build()).build();
             } else {
+                log.warn("HTTP error {} retrieving {}", response.getStatusLine().getStatusCode(), docUrl);
                 throw new WebApplicationException(400);
             }
         } catch (IOException e) {

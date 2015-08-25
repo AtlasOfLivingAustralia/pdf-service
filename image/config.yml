@@ -1,5 +1,5 @@
 unoconvPath: /usr/bin/unoconv
-storageDir: /var/lib/pdfgen
+storageDir: /storage
 
 server:
   type: simple

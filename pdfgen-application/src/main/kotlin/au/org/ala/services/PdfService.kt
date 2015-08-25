@@ -44,7 +44,7 @@ public class PdfService(val exec: String, val storageDir: String) {
             val stderr = p.getErrorStream().reader().readText()
             val exit = p.waitFor()
             if (exit > 0) {
-                log.error("Non zero error code converting $tempFile")
+                log.error("Exit code $exit converting $tempFile")
                 log.error("$tempFile stdout:\n$stdout")
                 log.error("$tempFile stderr:\n$stderr")
                 throw WebApplicationException(500)
