@@ -1,5 +1,5 @@
-#unoconvPath: /usr/bin/unoconv
-unoconvPath: /usr/local/bin/unoconv
+unoconvPath: /usr/bin/unoconv
+#unoconvPath: /usr/local/bin/unoconv
 storageDir: pdfs
 
 server:
@@ -15,7 +15,7 @@ logging:
   level: INFO
   loggers:
     io.dropwizard: INFO
-    au.org.ala: INFO
+    au.org.ala: DEBUG
     #org.skife.jdbi.v2: TRACE
     metrics: OFF
   appenders:

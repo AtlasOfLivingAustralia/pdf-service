@@ -26,12 +26,15 @@ import org.glassfish.jersey.media.multipart.internal.FormDataParamInjectionFeatu
 import org.glassfish.jersey.media.multipart.internal.MultiPartReaderClientSide
 import org.glassfish.jersey.media.multipart.internal.MultiPartReaderServerSide
 import org.glassfish.jersey.media.multipart.internal.MultiPartWriter
+import java.io.File
+import java.io.IOException
+import java.nio.file.Files
 
 public class PdfGen : Application<PdfGenConfiguration>() {
 
     companion object {
 
-        val log = LoggerFactory.getLogger(PdfGen.javaClass)
+        val log = LoggerFactory.getLogger(javaClass<PdfGen>())
 
         val ALLOWED_ORIGINS = "*"
 
@@ -68,11 +71,26 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept");
         filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true");
 
+        val storageDir = ensureStorageDir(config.storageDir)
+        log.info("Using ${storageDir.getAbsolutePath()} for PDF storage")
+
         val httpClient: HttpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
-        val service = PdfService(config.unoconvPath, config.storageDir)
+        val service = PdfService(config.unoconvPath, storageDir, config.sofficeHost, config.sofficePort)
         //environment.jersey().register(KtPdfResource(httpClient, service))
         environment.jersey().register(PdfResource(httpClient, service))
 
+    }
+
+    private fun ensureStorageDir(storageDir: String): File {
+        val file = File(storageDir)
+        return if (file.exists()) {
+            if (!file.isDirectory()) throw IOException("Storage dir is not a directory: ${file.getAbsolutePath()}")
+            if (!file.canWrite()) throw IOException("Storage dir is not writable: ${file.getAbsolutePath()}")
+            file
+        } else {
+            if (!file.mkdirs()) throw IOException("Could not create storage dir: ${file.getAbsolutePath()}")
+            file
+        }
     }
 
     fun shutdown(vararg args: String) {

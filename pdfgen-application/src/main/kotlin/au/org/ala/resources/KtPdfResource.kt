@@ -23,6 +23,10 @@ import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
 import javax.ws.rs.core.UriInfo
 
+/**
+ * Disabled because Kotlin adds extra annotations to method parameters, which the Jersey FormDataParam extractor
+ * can't deal with.
+ */
 Path("pdf")
 public class KtPdfResource(val client: HttpClient, val service: PdfService) {
 

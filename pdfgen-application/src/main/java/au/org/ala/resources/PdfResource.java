@@ -18,6 +18,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 
 @Path("pdf")
 public class PdfResource {
@@ -47,7 +48,7 @@ public class PdfResource {
                     hash = service.hashAndConvert(it);
                 }
 
-                return Response.status(Response.Status.MOVED_PERMANENTLY).location(info.getBaseUriBuilder().path(hash).build()).build();
+                return Response.status(Response.Status.MOVED_PERMANENTLY).location(buildPdfURI(info, hash)).build();
             } else {
                 log.warn("HTTP error {} retrieving {}", response.getStatusLine().getStatusCode(), docUrl);
                 throw new WebApplicationException(400);
@@ -76,12 +77,18 @@ public class PdfResource {
             throw new WebApplicationException(500);
         }
 
-        return Response.status(Response.Status.SEE_OTHER).location(info.getBaseUriBuilder().path(KtPdfResource.class).path(hash).build()).build();
+        return Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, hash)).build();
+    }
+
+    static URI buildPdfURI(UriInfo info, String hash) {
+        return info.getBaseUriBuilder().path(PdfResource.class).path(hash).build();
     }
 
     @GET
     @Path("{sha}")
     public File pdf(@PathParam("sha") String sha) {
-        return service.fileForSha(sha);
+        final File file = service.fileForSha(sha);
+        log.debug("Sending file {}", file.getAbsolutePath());
+        return file;
     }
 }
