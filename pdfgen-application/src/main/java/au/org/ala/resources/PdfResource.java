@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 @Path("pdf")
@@ -56,7 +55,7 @@ public class PdfResource {
         if (docUrl == null) throw new WebApplicationException(400);
 
         try {
-            return Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, this.cache.getUnchecked(docUrl))).build();
+            return Response.status(Response.Status.MOVED_PERMANENTLY).location(buildPdfURI(info, this.cache.getUnchecked(docUrl))).build();
         } catch (UncheckedExecutionException e) {
             if (e.getCause() instanceof WebApplicationException) throw (WebApplicationException) e.getCause();
             else {
@@ -74,15 +73,12 @@ public class PdfResource {
                            @Context UriInfo info) {
         //if (file == null) throw WebApplicationException(400)
 
-        String hash;
         try (InputStream it = file) {
-            hash = service.hashAndConvert(it);
+            return Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, service.hashAndConvert(it))).build();
         } catch (IOException e) {
-            log.error("Error converting {}", contentDispositionHeader.getName(), e);
+            log.error("Error converting file upload: {}", contentDispositionHeader.getName(), e);
             throw new WebApplicationException(500);
         }
-
-        return Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, hash)).build();
     }
 
     String downloadAndHash(String docUrl) {
@@ -108,7 +104,7 @@ public class PdfResource {
     }
 
     static URI buildPdfURI(UriInfo info, String hash) {
-        return info.getBaseUriBuilder().path(PdfResource.class).path(hash).build();
+        return info.getBaseUriBuilder().path(PdfResource.class).path(PdfResource.class, "pdf").build(hash);
     }
 
     @GET
