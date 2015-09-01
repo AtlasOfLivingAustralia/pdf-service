@@ -81,6 +81,7 @@ task pdfgenDocker(type: Docker) {
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get update'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-7-jre-headless'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y libreoffice unoconv xfonts-mathml fonts-dejavu fonts-sil-gentium-basic fonts-sil-gentium fonts-liberation --no-install-recommends --no-install-suggests'
+    runCommand 'apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'
     runCommand 'mkdir /etc/service/pdfgen'
     runCommand 'mkdir /etc/service/soffice'
     runCommand 'mkdir -p /var/lib/pdfgen'
@@ -88,7 +89,6 @@ task pdfgenDocker(type: Docker) {
     runCommand 'mkdir -p /etc/pdfgen'
     addFile 'image/pdfgen.sh', '/etc/service/pdfgen/run'
     addFile 'image/soffice.sh', '/etc/service/soffice/run'
-    addFile "build/libs/pdfgen-$version-all.jar", '/opt/pdfgen/pdfgen.jar'
     addFile 'image/config.yml', '/etc/pdfgen/config.yml'
-    runCommand 'apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'
+    addFile "build/libs/pdfgen-$version-all.jar", '/opt/pdfgen/pdfgen.jar'
 }
