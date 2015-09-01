@@ -78,7 +78,9 @@ task pdfgenDocker(type: Docker) {
     exposePort 9090
     volume '/storage'
     runCommand 'apt-add-repository -y ppa:libreoffice/libreoffice-5-0'
-    runCommand 'apt-get update && apt-get install -y openjdk-7-jre-headless && apt-get install -y libreoffice unoconv xfonts-mathml fonts-dejavu fonts-sil-gentium-basic fonts-sil-gentium fonts-liberation --no-install-recommends --no-install-suggests'
+    runCommand 'DEBIAN_FRONTEND=noninteractive apt-get update'
+    runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-7-jre-headless'
+    runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y libreoffice unoconv xfonts-mathml fonts-dejavu fonts-sil-gentium-basic fonts-sil-gentium fonts-liberation --no-install-recommends --no-install-suggests'
     runCommand 'mkdir /etc/service/pdfgen'
     runCommand 'mkdir /etc/service/soffice'
     runCommand 'mkdir -p /var/lib/pdfgen'
