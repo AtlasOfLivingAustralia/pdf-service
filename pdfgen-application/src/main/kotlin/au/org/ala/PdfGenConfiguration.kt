@@ -20,6 +20,9 @@ public class PdfGenConfiguration : Configuration() {
     public var storageDir: String = ""
 
     NotEmpty JsonProperty
+    public var urlCacheSpec: String = "expireAfterAccess=7d"
+
+    NotEmpty JsonProperty
     public var sofficeHost: String = "localhost"
 
     Range(min=1, max=65535) JsonProperty

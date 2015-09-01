@@ -77,7 +77,7 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         val httpClient: HttpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
         val service = PdfService(config.unoconvPath, storageDir, config.sofficeHost, config.sofficePort)
         //environment.jersey().register(KtPdfResource(httpClient, service))
-        environment.jersey().register(PdfResource(httpClient, service))
+        environment.jersey().register(PdfResource(httpClient, service, config.urlCacheSpec))
 
     }
 

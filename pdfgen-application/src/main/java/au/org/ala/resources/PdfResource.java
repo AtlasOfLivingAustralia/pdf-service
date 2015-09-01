@@ -37,10 +37,10 @@ public class PdfResource {
     // TODO inject
     private final LoadingCache<String, String> cache;
 
-    public PdfResource(HttpClient client, PdfService service) {
+    public PdfResource(HttpClient client, PdfService service, String urlCacheSpec) {
         this.client = client;
         this.service = service;
-        this.cache = CacheBuilder.newBuilder().expireAfterAccess(5, TimeUnit.MINUTES).build(new CacheLoader<String, String>() {
+        this.cache = CacheBuilder.from(urlCacheSpec).build(new CacheLoader<String, String>() {
             @Override
             public String load(String key) {
                 return downloadAndHash(key);
