@@ -75,7 +75,7 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         log.info("Using ${storageDir.getAbsolutePath()} for PDF storage")
 
         val httpClient: HttpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
-        val service = PdfService(config.unoconvPath, storageDir, config.sofficeHost, config.sofficePort)
+        val service = PdfService(config.sofficePath, storageDir)
         //environment.jersey().register(KtPdfResource(httpClient, service))
         environment.jersey().register(PdfResource(httpClient, service, config.urlCacheSpec))
 
