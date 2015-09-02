@@ -1,5 +1,5 @@
 unoconvPath: /usr/bin/unoconv
-storageDir: /storage
+storageDir: /storage/pdfs
 
 server:
   type: simple

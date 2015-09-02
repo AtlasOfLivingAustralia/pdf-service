@@ -12,6 +12,7 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.concurrent.TimeUnit;
 
 @Path("pdf")
 public class PdfResource {
@@ -42,7 +42,7 @@ public class PdfResource {
         this.service = service;
         this.cache = CacheBuilder.from(urlCacheSpec).build(new CacheLoader<String, String>() {
             @Override
-            public String load(String key) {
+            public String load(@NotNull String key) {
                 return downloadAndHash(key);
             }
         });

@@ -66,7 +66,7 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         val filter = environment.servlets().addFilter("CORSFilter", javaClass<CrossOriginFilter>())
 
         filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, environment.getApplicationContext().getContextPath() + "*");
-        filter.setInitParameter(ALLOWED_METHODS_PARAM, "GET,PUT,POST,DELETE,OPTIONS");
+        filter.setInitParameter(ALLOWED_METHODS_PARAM, "HEAD,GET,PUT,POST,DELETE,OPTIONS");
         filter.setInitParameter(ALLOWED_ORIGINS_PARAM, ALLOWED_ORIGINS);
         filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept");
         filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true");
