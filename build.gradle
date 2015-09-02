@@ -72,30 +72,27 @@ docker {
 }
 
 task loDocker(type: Docker) {
-    applicationName = "libreoffice"
-    version = "5.0"
+    applicationName "libreoffice"
+    tagVersion "5.0"
     runCommand 'apt-add-repository -y ppa:libreoffice/libreoffice-5-0'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get update'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y libreoffice unoconv xfonts-mathml fonts-dejavu fonts-sil-gentium-basic fonts-sil-gentium fonts-liberation --no-install-recommends --no-install-suggests'
     runCommand 'apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'
-    runCommand 'useradd -r -s /bin/false soffice'
-    runCommand 'mkdir /etc/service/soffice'
-    addFile 'image/soffice.sh', '/etc/service/soffice/run'
 }
 
 task pdfgenDocker(type: Docker) {
-    dependsOn 'shadowJar', 'libreoffice'
+    dependsOn 'shadowJar', 'loDocker'
     baseImage 'au.org.ala/libreoffice:5.0'
-    applicationName = "pdfgen"
+    applicationName "pdfgen"
     defaultCommand = ['/sbin/my_init']
     exposePort 9090
-    volume '/storage'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get update'
     runCommand 'DEBIAN_FRONTEND=noninteractive apt-get install -y openjdk-7-jre-headless'
     runCommand 'apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*'
-    runCommand 'useradd -r -s /bin/false pdfgen'
+    runCommand 'useradd -r -s /bin/false -m pdfgen'
     runCommand 'mkdir -p /storage/pdfs'
-    runCommand 'chown pdfgen:pdfgen /storage/pdfs'
+    runCommand 'chown pdfgen /storage/pdfs'
+    volume '/storage'
     runCommand 'mkdir /etc/service/pdfgen'
     addFile 'image/pdfgen.sh', '/etc/service/pdfgen/run'
     runCommand 'mkdir -p /opt/pdfgen'
