@@ -1,5 +1,5 @@
-unoconvPath: /usr/bin/unoconv
-#unoconvPath: /usr/local/bin/unoconv
+sofficePath: /Applications/LibreOffice.app/Contents/MacOS/soffice
+#sofficePath: /usr/bin/soffice
 storageDir: pdfs
 
 server:

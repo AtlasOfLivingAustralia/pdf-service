@@ -1,4 +1,4 @@
-unoconvPath: /usr/bin/unoconv
+sofficePath: /usr/bin/soffice
 storageDir: /storage/pdfs
 
 server:

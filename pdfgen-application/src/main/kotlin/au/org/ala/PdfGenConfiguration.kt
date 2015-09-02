@@ -14,19 +14,13 @@ import kotlin.properties.Delegates
 public class PdfGenConfiguration : Configuration() {
 
     NotEmpty JsonProperty
-    public var unoconvPath: String = ""
+    public var sofficePath: String = ""
 
     NotEmpty JsonProperty
     public var storageDir: String = ""
 
     NotEmpty JsonProperty
     public var urlCacheSpec: String = "expireAfterAccess=7d"
-
-    NotEmpty JsonProperty
-    public var sofficeHost: String = "localhost"
-
-    Range(min=1, max=65535) JsonProperty
-    public var sofficePort: Int = 2220
 
     Valid NotNull JsonProperty("httpClient")
     public val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration();

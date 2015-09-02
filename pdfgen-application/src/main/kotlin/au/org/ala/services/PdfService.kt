@@ -11,7 +11,7 @@ import java.io.InputStream
 import java.util.*
 import javax.ws.rs.WebApplicationException
 
-public class PdfService(val exec: String, val storageDir: File, val sofficeHost: String, val sofficePort: Int) {
+public class PdfService(val exec: String, val storageDir: File) {
 
     companion object {
         private val log = LoggerFactory.getLogger(javaClass<PdfService>())
@@ -38,12 +38,10 @@ public class PdfService(val exec: String, val storageDir: File, val sofficeHost:
             log.debug("PDF file is $pdfFile")
             if (!pdfFile.exists()) {
                 log.debug("PDF file does not exist, generating...")
-                //unoconv --connection 'socket,host=127.0.0.1,port=2220,tcpNoDelay=1;urp;StarOffice.ComponentContext' -f pdf test.html
-                val pb = ProcessBuilder(exec, "--connection", "socket,host=$sofficeHost,port=$sofficePort,tcpNoDelay=1;urp;StarOffice.ComponentContext", "-f", "pdf", tempFile.toString())
+                val pb = ProcessBuilder(exec, "--nologo", "--headless", "--nofirststartwizard", "--convert-to", "pdf", "--outdir", outDir.toString(), tempFile.toString())
                 log.debug("Running ${pb.command()}")
                 val p = pb.start()
 
-                //val p = ProcessBuilder(exec, "--convert-to", "pdf", "--headless", "--outdir", outDir.toString(), tempFile.toString()).start()
                 val stdout = p.getInputStream().reader().readText()
                 val stderr = p.getErrorStream().reader().readText()
                 val exit = p.waitFor()
@@ -60,7 +58,6 @@ public class PdfService(val exec: String, val storageDir: File, val sofficeHost:
             return hashString
         } finally {
             outDir.deleteRecursively()
-
         }
     }
 }
