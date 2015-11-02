@@ -13,16 +13,16 @@ import kotlin.properties.Delegates
 
 public class PdfGenConfiguration : Configuration() {
 
-    NotEmpty JsonProperty
+    @NotEmpty @JsonProperty
     public var sofficePath: String = ""
 
-    NotEmpty JsonProperty
+    @NotEmpty @JsonProperty
     public var storageDir: String = ""
 
-    NotEmpty JsonProperty
+    @NotEmpty @JsonProperty
     public var urlCacheSpec: String = "expireAfterAccess=7d"
 
-    Valid NotNull JsonProperty("httpClient")
-    public val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration();
+    @Valid @NotNull @JsonProperty("httpClient")
+    public val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration()
 
 }

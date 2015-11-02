@@ -2,22 +2,19 @@ package au.org.ala.resources
 
 import au.org.ala.services.PdfService
 import com.codahale.metrics.annotation.Timed
-import com.google.common.hash.Hashing
-import com.google.common.hash.HashingOutputStream
-import com.google.common.io.ByteStreams
-import com.google.common.io.Files
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.util.concurrent.UncheckedExecutionException
 import org.apache.http.client.HttpClient
 import org.apache.http.client.methods.HttpGet
+import org.apache.http.client.methods.HttpRequestBase
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition
 import org.glassfish.jersey.media.multipart.FormDataParam
 import org.slf4j.LoggerFactory
-import java.io.File
-import java.io.FileOutputStream
+import java.io.IOException
 import java.io.InputStream
-import java.util.*
-import javax.inject.Singleton
+import java.net.URI
 import javax.ws.rs.*
-import javax.ws.rs.client.Client
 import javax.ws.rs.core.Context
 import javax.ws.rs.core.MediaType
 import javax.ws.rs.core.Response
@@ -27,45 +24,79 @@ import javax.ws.rs.core.UriInfo
  * Disabled because Kotlin adds extra annotations to method parameters, which the Jersey FormDataParam extractor
  * can't deal with.
  */
-Path("pdf")
-public class KtPdfResource(val client: HttpClient, val service: PdfService) {
+@Path("pdf")
+public class KtPdfResource(val client: HttpClient, val service: PdfService, urlCacheSpec: String) {
 
     companion object {
-        private val log = LoggerFactory.getLogger(KtPdfResource.javaClass)
+        private val log = LoggerFactory.getLogger(KtPdfResource::class.java)
+
+        internal fun buildPdfURI(info: UriInfo, hash: String): URI {
+            return info.baseUriBuilder.path(PdfResource::class.java).path(PdfResource::class.java, "pdf").build(hash)
+        }
     }
 
-    Timed GET
-    public fun generate(QueryParam("docUrl") docUrl: String?,
-            Context info: UriInfo): Response {
+    val cache = CacheBuilder.from(urlCacheSpec).build(object: CacheLoader<String,String>() {
+        override fun load(key: String): String = downloadAndHash(key)
+    })
+
+    @Timed @GET
+    public fun generate(@QueryParam("docUrl") docUrl: String?,
+            @Context info: UriInfo): Response {
 
         if (docUrl == null) throw WebApplicationException(400)
 
-        val response = client.execute(HttpGet(docUrl))
-        if (response.getStatusLine().getStatusCode() == 200) {
-            val hash = response.getEntity().getContent().use {
-                service.hashAndConvert(it)
+        try {
+            return Response.status(Response.Status.MOVED_PERMANENTLY).location(buildPdfURI(info, cache.getUnchecked(docUrl))).build()
+        } catch (e: UncheckedExecutionException) {
+            if (e.cause is WebApplicationException)
+                throw e.cause as WebApplicationException
+            else {
+                log.warn("Caught exception while trying to generate pdf for {}", docUrl, e)
+                throw WebApplicationException(500)
             }
-
-            return Response.status(Response.Status.MOVED_PERMANENTLY).location(info.getBaseUriBuilder().path(hash).build()).build()
-        } else {
-            throw WebApplicationException(400)
         }
+
     }
 
-    Timed POST Consumes(MediaType.MULTIPART_FORM_DATA)
-    public fun upload(FormDataParam("file") file: InputStream,
-               FormDataParam("file") contentDispositionHeader: FormDataContentDisposition,
-               Context info: UriInfo ): Response {
+    @Timed @POST @Consumes(MediaType.MULTIPART_FORM_DATA)
+    public fun upload(@FormDataParam("file") file: InputStream,
+               @FormDataParam("file") contentDispositionHeader: FormDataContentDisposition,
+               @Context info: UriInfo ): Response {
         //if (file == null) throw WebApplicationException(400)
 
-        val hash = file.use {
-            service.hashAndConvert(it)
+        try {
+            return file.use { Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, service.hashAndConvert(it))).build() }
+        } catch (e: IOException) {
+            log.error("Error converting file upload: {}", contentDispositionHeader.name, e)
+            throw WebApplicationException(500)
         }
 
-        return Response.status(Response.Status.SEE_OTHER).location(info.getBaseUriBuilder().path(KtPdfResource.javaClass).path(hash).build()).build()
     }
 
-    GET Path("{sha}")
-    public fun pdf(PathParam("sha") sha: String): File = service.fileForSha(sha)
+    @GET @Path("{sha}") @Produces("application/pdf")
+    public fun pdf(@PathParam("sha") sha: String): Response {
+        val file = service.fileForSha(sha)
+        log.debug("Sending file ${file.absolutePath}");
+        return Response.ok(file).header("Content-Length", file.length()).build();
+    }
 
+
+    internal fun downloadAndHash(docUrl: String): String {
+        return HttpGet(docUrl).use {
+            val response = client.execute(it)
+            if (response.statusLine.statusCode != 200) {
+                log.warn("HTTP error {} retrieving {}", response.statusLine.statusCode, docUrl)
+                throw WebApplicationException(400)
+            }
+            response.entity.content.use { service.hashAndConvert(it) }
+        }
+    }
+}
+
+fun <T> HttpRequestBase.use(f: (HttpRequestBase) -> T): T {
+    try {
+        return f(this)
+    } finally {
+        this.reset()
+    }
 }

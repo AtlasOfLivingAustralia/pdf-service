@@ -14,7 +14,7 @@ import javax.ws.rs.WebApplicationException
 public class PdfService(val exec: String, val storageDir: File) {
 
     companion object {
-        private val log = LoggerFactory.getLogger(javaClass<PdfService>())
+        private val log = LoggerFactory.getLogger(PdfService::class.java)
     }
 
     fun fileForSha(sha: String): File = File(storageDir, "$sha.pdf")
@@ -42,8 +42,8 @@ public class PdfService(val exec: String, val storageDir: File) {
                 log.debug("Running ${pb.command()}")
                 val p = pb.start()
 
-                val stdout = p.getInputStream().reader().readText()
-                val stderr = p.getErrorStream().reader().readText()
+                val stdout = p.inputStream.reader().readText()
+                val stderr = p.errorStream.reader().readText()
                 val exit = p.waitFor()
                 if (exit > 0) {
                     log.error("Exit code $exit converting $tempFile")
