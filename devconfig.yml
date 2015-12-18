@@ -12,12 +12,11 @@ server:
     port: 9090
 
 logging:
-  level: INFO
+  level: "INFO"
   loggers:
-    io.dropwizard: INFO
-    au.org.ala: DEBUG
-    #org.skife.jdbi.v2: TRACE
-    metrics: OFF
+    "io.dropwizard": "INFO"
+    "au.org.ala": "DEBUG"
+    "metrics": "OFF"
   appenders:
     - type: console
       threshold: ALL
