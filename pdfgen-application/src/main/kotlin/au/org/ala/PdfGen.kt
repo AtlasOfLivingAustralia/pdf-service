@@ -8,7 +8,6 @@ import io.dropwizard.client.HttpClientBuilder
 import io.dropwizard.forms.MultiPartBundle
 import io.dropwizard.setup.Bootstrap
 import io.dropwizard.setup.Environment
-import org.apache.http.client.HttpClient
 import org.eclipse.jetty.servlets.CrossOriginFilter
 import org.eclipse.jetty.servlets.CrossOriginFilter.*
 import org.slf4j.LoggerFactory
@@ -41,7 +40,6 @@ public class PdfGen : Application<PdfGenConfiguration>() {
     }
 
     var environment: Environment by Delegates.notNull()
-    //var dao: DAO by Delegates.notNull()
 
     override public fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
         log.info("Initialising")
@@ -63,7 +61,7 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         val storageDir = ensureStorageDir(config.storageDir)
         log.info("Using ${storageDir.absolutePath} for PDF storage")
 
-        val httpClient: HttpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
+        val httpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
         val service = PdfService(config.sofficePath, storageDir)
         //environment.jersey().register(KtPdfResource(httpClient, service, config.urlCacheSpec))
         environment.jersey().register(PdfResource(httpClient, service, config.urlCacheSpec))
@@ -75,8 +73,8 @@ public class PdfGen : Application<PdfGenConfiguration>() {
             if (exists()) {
                 if (!isDirectory) throw IOException("Storage dir is not a directory: $absolutePath")
                 if (!canWrite()) throw IOException("Storage dir is not writable: $absolutePath")
-            } else {
-                if (!mkdirs()) throw IOException("Could not create storage dir: $absolutePath")
+            } else if (!mkdirs()) {
+                throw IOException("Could not create storage dir: $absolutePath")
             }
         }
     }

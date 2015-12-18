@@ -2,7 +2,6 @@ package au.org.ala.services
 
 import com.google.common.hash.Hashing
 import com.google.common.hash.HashingOutputStream
-import com.google.common.io.ByteStreams
 import com.google.common.io.Files
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -27,14 +26,14 @@ public class PdfService(val exec: String, val storageDir: File) {
             log.debug("Using temp file $tempFile")
 
             val hash = HashingOutputStream(Hashing.sha256(), FileOutputStream(tempFile)).use {
-                ByteStreams.copy(stream, it)
+                stream.copyTo(it)
                 it.flush()
                 it.hash()
             }
             val hashString = hash.toString()
             log.debug("Hash is $hashString")
 
-            val pdfFile = File(storageDir, "$hashString.pdf")
+            val pdfFile = fileForSha(hashString)
             log.debug("PDF file is $pdfFile")
             if (!pdfFile.exists()) {
                 log.debug("PDF file does not exist, generating...")
@@ -53,7 +52,7 @@ public class PdfService(val exec: String, val storageDir: File) {
                 }
                 val tmpPdf = File(outDir, "${tempFile.name}.pdf")
                 log.debug("Temp PDF generated at $tmpPdf")
-                Files.copy(tmpPdf, pdfFile)
+                tmpPdf.copyTo(pdfFile)
             }
             return hashString
         } finally {

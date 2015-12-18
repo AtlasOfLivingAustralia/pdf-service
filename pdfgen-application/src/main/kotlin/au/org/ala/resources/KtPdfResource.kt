@@ -25,7 +25,7 @@ import javax.ws.rs.core.UriInfo
  * can't deal with.
  */
 @Path("pdf")
-public class KtPdfResource(val client: HttpClient, val service: PdfService, urlCacheSpec: String) {
+public class KtPdfResource(private val client: HttpClient, private val service: PdfService, urlCacheSpec: String) {
 
     companion object {
         private val log = LoggerFactory.getLogger(KtPdfResource::class.java)
@@ -35,7 +35,7 @@ public class KtPdfResource(val client: HttpClient, val service: PdfService, urlC
         }
     }
 
-    val cache = CacheBuilder.from(urlCacheSpec).build(object: CacheLoader<String,String>() {
+    private val cache = CacheBuilder.from(urlCacheSpec).build(object: CacheLoader<String,String>() {
         override fun load(key: String): String = downloadAndHash(key)
     })
 
@@ -48,8 +48,9 @@ public class KtPdfResource(val client: HttpClient, val service: PdfService, urlC
         try {
             return Response.status(Response.Status.MOVED_PERMANENTLY).location(buildPdfURI(info, cache.getUnchecked(docUrl))).build()
         } catch (e: UncheckedExecutionException) {
-            if (e.cause is WebApplicationException)
-                throw e.cause as WebApplicationException
+            val c = e.cause
+            if (c is WebApplicationException)
+                throw c
             else {
                 log.warn("Caught exception while trying to generate pdf for {}", docUrl, e)
                 throw WebApplicationException(500)
@@ -76,7 +77,7 @@ public class KtPdfResource(val client: HttpClient, val service: PdfService, urlC
     @GET @Path("{sha}") @Produces("application/pdf")
     public fun pdf(@PathParam("sha") sha: String): Response {
         val file = service.fileForSha(sha)
-        log.debug("Sending file ${file.absolutePath}");
+        log.debug("Sending file ${file.absolutePath}")
         return Response.ok(file).header("Content-Length", file.length()).build();
     }
 
@@ -84,8 +85,9 @@ public class KtPdfResource(val client: HttpClient, val service: PdfService, urlC
     internal fun downloadAndHash(docUrl: String): String {
         return HttpGet(docUrl).use {
             val response = client.execute(it)
-            if (response.statusLine.statusCode != 200) {
-                log.warn("HTTP error {} retrieving {}", response.statusLine.statusCode, docUrl)
+            val status = response.statusLine.statusCode
+            if (status != 200) {
+                log.warn("HTTP error $status retrieving $docUrl")
                 throw WebApplicationException(400)
             }
             response.entity.content.use { service.hashAndConvert(it) }
