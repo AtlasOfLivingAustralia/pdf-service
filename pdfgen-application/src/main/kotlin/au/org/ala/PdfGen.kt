@@ -3,6 +3,7 @@ package au.org.ala
 
 import au.org.ala.resources.PdfResource
 import au.org.ala.services.PdfService
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import io.dropwizard.Application
 import io.dropwizard.client.HttpClientBuilder
 import io.dropwizard.forms.MultiPartBundle
@@ -49,6 +50,8 @@ public class PdfGen : Application<PdfGenConfiguration>() {
 
     override fun run(config: PdfGenConfiguration, environment: Environment) {
         this.environment = environment
+
+        environment.objectMapper.registerModule(KotlinModule())
 
         val filter = environment.servlets().addFilter("CORSFilter", CrossOriginFilter::class.java)
 
