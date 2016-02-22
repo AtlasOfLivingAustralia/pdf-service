@@ -24,8 +24,7 @@ import javax.ws.rs.core.UriInfo
  * Disabled because Kotlin adds extra annotations to method parameters, which the Jersey FormDataParam extractor
  * can't deal with.
  */
-@Path("pdf")
-public class KtPdfResource(private val client: HttpClient, private val service: PdfService, urlCacheSpec: String) {
+@Path("pdf") class KtPdfResource(private val client: HttpClient, private val service: PdfService, urlCacheSpec: String) {
 
     companion object {
         private val log = LoggerFactory.getLogger(KtPdfResource::class.java)
@@ -39,9 +38,8 @@ public class KtPdfResource(private val client: HttpClient, private val service: 
         override fun load(key: String): String = downloadAndHash(key)
     })
 
-    @Timed @GET
-    public fun generate(@QueryParam("docUrl") docUrl: String?,
-            @Context info: UriInfo): Response {
+    @Timed @GET fun generate(@QueryParam("docUrl") docUrl: String?,
+                             @Context info: UriInfo): Response {
 
         if (docUrl == null) throw WebApplicationException(400)
 
@@ -60,7 +58,7 @@ public class KtPdfResource(private val client: HttpClient, private val service: 
     }
 
     @Timed @POST @Consumes(MediaType.MULTIPART_FORM_DATA)
-    public fun upload(@FormDataParam("file") file: InputStream,
+    fun upload(@FormDataParam("file") file: InputStream,
                @FormDataParam("file") contentDispositionHeader: FormDataContentDisposition,
                @Context info: UriInfo ): Response {
         //if (file == null) throw WebApplicationException(400)
@@ -74,8 +72,7 @@ public class KtPdfResource(private val client: HttpClient, private val service: 
 
     }
 
-    @GET @Path("{sha}") @Produces("application/pdf")
-    public fun pdf(@PathParam("sha") sha: String): Response {
+    @GET @Path("{sha}") @Produces("application/pdf") fun pdf(@PathParam("sha") sha: String): Response {
         val file = service.fileForSha(sha)
         log.debug("Sending file ${file.absolutePath}")
         return Response.ok(file).header("Content-Length", file.length()).build();

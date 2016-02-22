@@ -28,23 +28,23 @@ public class PdfGen : Application<PdfGenConfiguration>() {
         val pdfGen = PdfGen()
 
         //throws(Exception::class)
-        @JvmStatic public fun main(args: Array<String>) {
+        @JvmStatic fun main(args: Array<String>) {
             pdfGen.run(*args)
         }
 
         //throws(Exception::class)
         @Suppress("UNUSED_SYMBOL")
-        @JvmStatic public fun stop(args: Array<String>) {
+        @JvmStatic fun stop(args: Array<String>) {
             pdfGen.shutdown(*args)
         }
     }
 
     var environment: Environment by Delegates.notNull()
 
-    override public fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
+    override fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
         log.info("Initialising")
         super.initialize(bootstrap)
-        bootstrap.addBundle(MultiPartBundle());
+        bootstrap.addBundle(MultiPartBundle())
     }
 
     override fun run(config: PdfGenConfiguration, environment: Environment) {
@@ -52,11 +52,11 @@ public class PdfGen : Application<PdfGenConfiguration>() {
 
         val filter = environment.servlets().addFilter("CORSFilter", CrossOriginFilter::class.java)
 
-        filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, environment.applicationContext.contextPath + "*");
-        filter.setInitParameter(ALLOWED_METHODS_PARAM, "HEAD,GET,PUT,POST,DELETE,OPTIONS");
-        filter.setInitParameter(ALLOWED_ORIGINS_PARAM, ALLOWED_ORIGINS);
-        filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept");
-        filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true");
+        filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, environment.applicationContext.contextPath + "*")
+        filter.setInitParameter(ALLOWED_METHODS_PARAM, "HEAD,GET,PUT,POST,DELETE,OPTIONS")
+        filter.setInitParameter(ALLOWED_ORIGINS_PARAM, ALLOWED_ORIGINS)
+        filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept")
+        filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true")
 
         val storageDir = ensureStorageDir(config.storageDir)
         log.info("Using ${storageDir.absolutePath} for PDF storage")

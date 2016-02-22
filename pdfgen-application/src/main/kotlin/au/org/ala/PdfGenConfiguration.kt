@@ -11,18 +11,14 @@ import javax.validation.Valid
 import javax.validation.constraints.NotNull
 import kotlin.properties.Delegates
 
-public class PdfGenConfiguration : Configuration() {
+class PdfGenConfiguration : Configuration() {
 
-    @NotEmpty @JsonProperty
-    public var sofficePath: String = ""
+    @NotEmpty @JsonProperty var sofficePath: String = ""
 
-    @NotEmpty @JsonProperty
-    public var storageDir: String = ""
+    @NotEmpty @JsonProperty var storageDir: String = ""
 
-    @NotEmpty @JsonProperty
-    public var urlCacheSpec: String = "expireAfterAccess=7d"
+    @NotEmpty @JsonProperty var urlCacheSpec: String = "expireAfterAccess=7d"
 
-    @Valid @NotNull @JsonProperty("httpClient")
-    public val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration()
+    @Valid @NotNull @JsonProperty("httpClient") val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration()
 
 }

@@ -10,7 +10,7 @@ import java.io.InputStream
 import java.util.*
 import javax.ws.rs.WebApplicationException
 
-public class PdfService(val exec: String, val storageDir: File) {
+class PdfService(val exec: String, val storageDir: File) {
 
     companion object {
         private val log = LoggerFactory.getLogger(PdfService::class.java)
