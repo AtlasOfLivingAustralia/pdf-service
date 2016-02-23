@@ -1,6 +1,8 @@
 package au.org.ala
 
 
+import au.org.ala.bundles.CrossOriginBundle
+import au.org.ala.bundles.KotlinBundle
 import au.org.ala.resources.PdfResource
 import au.org.ala.services.PdfService
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -18,13 +20,11 @@ import java.util.*
 import javax.servlet.DispatcherType
 import kotlin.properties.Delegates
 
-public class PdfGen : Application<PdfGenConfiguration>() {
+class PdfGen : Application<PdfGenConfiguration>() {
 
     companion object {
 
         val log = LoggerFactory.getLogger(PdfGen::class.java)
-
-        val ALLOWED_ORIGINS = "*"
 
         val pdfGen = PdfGen()
 
@@ -45,21 +45,13 @@ public class PdfGen : Application<PdfGenConfiguration>() {
     override fun initialize(bootstrap: Bootstrap<PdfGenConfiguration>) {
         log.info("Initialising")
         super.initialize(bootstrap)
+        bootstrap.addBundle(KotlinBundle())
         bootstrap.addBundle(MultiPartBundle())
+        bootstrap.addBundle(CrossOriginBundle("*"))
     }
 
     override fun run(config: PdfGenConfiguration, environment: Environment) {
         this.environment = environment
-
-        environment.objectMapper.registerModule(KotlinModule())
-
-        val filter = environment.servlets().addFilter("CORSFilter", CrossOriginFilter::class.java)
-
-        filter.addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), false, environment.applicationContext.contextPath + "*")
-        filter.setInitParameter(ALLOWED_METHODS_PARAM, "HEAD,GET,PUT,POST,DELETE,OPTIONS")
-        filter.setInitParameter(ALLOWED_ORIGINS_PARAM, ALLOWED_ORIGINS)
-        filter.setInitParameter(ALLOWED_HEADERS_PARAM, "Origin, Content-Type, Accept")
-        filter.setInitParameter(ALLOW_CREDENTIALS_PARAM, "true")
 
         val storageDir = ensureStorageDir(config.storageDir)
         log.info("Using ${storageDir.absolutePath} for PDF storage")

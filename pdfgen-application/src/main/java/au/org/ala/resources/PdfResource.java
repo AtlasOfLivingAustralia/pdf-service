@@ -99,7 +99,7 @@ public class PdfResource {
             log.error("Error calling {}", docUrl, e);
             throw new WebApplicationException(500);
         } finally {
-            get.releaseConnection();
+            get.reset();
         }
     }
 
