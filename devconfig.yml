@@ -1,4 +1,5 @@
 sofficePath: /Applications/LibreOffice.app/Contents/MacOS/soffice
+htmltopdfPath: wkhtmltopdf
 #sofficePath: /usr/bin/soffice
 storageDir: pdfs
 
@@ -29,3 +30,6 @@ metrics:
     - type: log
       logger: metrics
       markerName: marker
+
+httpClient:
+    timeout: 5 minutes

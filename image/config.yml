@@ -1,4 +1,5 @@
 sofficePath: /usr/bin/soffice
+htmltopdfPath: /usr/bin/wkhtmltopdf
 storageDir: /storage/pdfs
 
 server:
@@ -28,3 +29,6 @@ metrics:
     - type: log
       logger: metrics
       markerName: marker
+
+httpClient:
+    timeout: 5 minutes

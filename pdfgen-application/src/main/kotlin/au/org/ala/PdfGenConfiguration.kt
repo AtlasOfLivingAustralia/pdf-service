@@ -15,6 +15,8 @@ class PdfGenConfiguration : Configuration() {
 
     @NotEmpty @JsonProperty var sofficePath: String = ""
 
+    @NotEmpty @JsonProperty var htmltopdfPath: String = ""
+
     @NotEmpty @JsonProperty var storageDir: String = ""
 
     @NotEmpty @JsonProperty var urlCacheSpec: String = "expireAfterAccess=7d"

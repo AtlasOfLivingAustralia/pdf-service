@@ -64,7 +64,7 @@ import javax.ws.rs.core.UriInfo
         //if (file == null) throw WebApplicationException(400)
 
         try {
-            return file.use { Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, service.hashAndConvert(it))).build() }
+            return file.use { Response.status(Response.Status.SEE_OTHER).location(buildPdfURI(info, service.hashAndConvertDocument(it))).build() }
         } catch (e: IOException) {
             log.error("Error converting file upload: {}", contentDispositionHeader.name, e)
             throw WebApplicationException(500)
@@ -87,7 +87,7 @@ import javax.ws.rs.core.UriInfo
                 log.warn("HTTP error $status retrieving $docUrl")
                 throw WebApplicationException(400)
             }
-            response.entity.content.use { service.hashAndConvert(it) }
+            response.entity.content.use { service.hashAndConvertDocument(it) }
         }
     }
 }
