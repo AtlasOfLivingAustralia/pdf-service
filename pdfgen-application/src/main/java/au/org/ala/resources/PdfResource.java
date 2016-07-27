@@ -72,7 +72,7 @@ public class PdfResource implements RemovalListener<String, String> {
 
         try {
             if (canCache) {
-                return Response.status(Response.Status.MOVED_PERMANENTLY).location(buildPdfURI(info, this.cache.getUnchecked(docUrl))).build();
+                return Response.status(Response.Status.TEMPORARY_REDIRECT).location(buildPdfURI(info, this.cache.getUnchecked(docUrl))).build();
             }
             else {
                 // The main reason for using this cache is to allow time for the file to be
