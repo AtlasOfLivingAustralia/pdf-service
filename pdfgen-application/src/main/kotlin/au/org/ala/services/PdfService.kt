@@ -27,9 +27,9 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
         return hash.toString()
     }
 
-    private fun convertToPDF(outputFileName: String, inputFile: File, conversionProcess: ProcessBuilder) {
-        val outDir = inputFile.parent
-        val pdfFile = fileForSha(outputFileName)
+    private fun convertToPDF(contentHash: String, inputFile: File, outputFile : File, conversionProcess: ProcessBuilder) {
+
+        val pdfFile = fileForSha(contentHash)
         log.debug("PDF file is $pdfFile")
         if (!pdfFile.exists()) {
             log.debug("PDF file does not exist, generating...")
@@ -45,9 +45,8 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
                 log.error("$inputFile stderr:\n$stderr")
                 throw WebApplicationException(500)
             }
-            val tmpPdf = File(outDir, "${inputFile.name}")
-            log.debug("Temp PDF generated at $tmpPdf")
-            tmpPdf.copyTo(pdfFile)
+            log.debug("Temp PDF generated at $outputFile")
+            outputFile.copyTo(pdfFile)
         }
     }
 
@@ -64,11 +63,11 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
             log.debug("PDF file is $pdfFile")
 
             val pb = ProcessBuilder(loExec, "--nologo", "--headless", "--nofirststartwizard", "--convert-to", "pdf", "--outdir", outDir.toString(), tempFile.toString())
-
-            convertToPDF(hashString, tempFile, pb)
+            val outputFile = File(outDir, "${tempFile.name}.pdf")
+            convertToPDF(hashString, tempFile, outputFile, pb)
             return hashString
         } finally {
-            outDir.deleteRecursively()
+            //outDir.deleteRecursively()
         }
     }
 
@@ -80,11 +79,10 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
             log.debug("Using temp file $tempFile")
 
             val hashString = hash(stream, tempFile)
-            val pdfFile = fileForSha(hashString)
-            log.debug("PDF file is $pdfFile")
 
-            val conversionProcessCommand = ProcessBuilder(htmltopdfExec, url, tempFile.toString())
-            convertToPDF(hashString, tempFile, conversionProcessCommand)
+            val outputFile = File(outDir, "${tempFile.name}.pdf")
+            val conversionProcessCommand = ProcessBuilder(htmltopdfExec, url, outputFile.toString())
+            convertToPDF(hashString, tempFile, outputFile, conversionProcessCommand)
             return hashString
         } finally {
             outDir.deleteRecursively()
