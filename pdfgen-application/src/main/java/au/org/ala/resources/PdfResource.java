@@ -57,9 +57,13 @@ public class PdfResource implements RemovalListener<String, String> {
 
     @Override
     public void onRemoval(RemovalNotification<String, String> notification) {
-        File pdf = service.fileForSha(notification.getValue());
-        if (pdf.exists()) {
-            pdf.delete();
+        log.debug("onRemoval for: "+notification.toString()+", cause: "+notification.getCause());
+        if (notification.wasEvicted()) {
+            File pdf = service.fileForSha(notification.getValue());
+            if (pdf.exists()) {
+                log.info("Deleting file: "+pdf.getPath());
+                pdf.delete();
+            }
         }
     }
 
@@ -158,6 +162,6 @@ public class PdfResource implements RemovalListener<String, String> {
     private Response respondWithPDF(String sha) {
         final File file = service.fileForSha(sha);
         log.debug("Sending file {}", file.getAbsolutePath());
-        return Response.ok(file).header("Content-Length", file.length()).build();
+        return Response.ok(file).type("application/pdf").header("Content-Length", file.length()).build();
     }
 }

@@ -81,7 +81,8 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
             val hashString = hash(stream, tempFile)
 
             val outputFile = File(outDir, "${tempFile.name}.pdf")
-            val conversionProcessCommand = ProcessBuilder(htmltopdfExec, url, outputFile.toString())
+
+            val conversionProcessCommand = ProcessBuilder(htmltopdfExec, "--javascript-delay", "10000", url, outputFile.toString())
             convertToPDF(hashString, tempFile, outputFile, conversionProcessCommand)
             return hashString
         } finally {
