@@ -3,7 +3,6 @@ package au.org.ala.resources;
 import au.org.ala.services.PdfService;
 import com.codahale.metrics.annotation.Timed;
 import com.google.common.cache.*;
-import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.apache.http.*;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -23,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 @Path("pdf")
@@ -34,25 +34,15 @@ public class PdfResource implements RemovalListener<String, String> {
     private final PdfService service;
 
     // TODO inject
-    private final LoadingCache<String, String> cache;
+    private final Cache<String, String> cache;
 
-    private final LoadingCache<String, String> tempCache;
+    private final Cache<String, String> tempCache;
 
     public PdfResource(HttpClient client, PdfService service, String urlCacheSpec) {
         this.client = client;
         this.service = service;
-        this.cache = CacheBuilder.from(urlCacheSpec).removalListener(this).build(new CacheLoader<String, String>() {
-            @Override
-            public String load(@NotNull String key) {
-                return downloadAndHash(key);
-            }
-        });
-        this.tempCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).removalListener(this).build(new CacheLoader<String, String>() {
-            @Override
-            public String load(@NotNull String key) {
-                return downloadAndHash(key);
-            }
-        });
+        this.cache = CacheBuilder.from(urlCacheSpec).removalListener(this).build();
+        this.tempCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).removalListener(this).build();
     }
 
     @Override
@@ -69,23 +59,29 @@ public class PdfResource implements RemovalListener<String, String> {
 
     @Timed
     @GET
-    public Response generate(@QueryParam("docUrl") String docUrl, @Context UriInfo info, @QueryParam("cacheable") String cacheable) {
+    public Response generate(@QueryParam("docUrl") final String docUrl, @Context UriInfo info, @QueryParam("cacheable") String cacheable, final @QueryParam("options") @DefaultValue("") String options) {
 
         if (docUrl == null) throw new WebApplicationException(400);
         boolean canCache = cacheable != null ? Boolean.valueOf(cacheable) : true;
-
         try {
+            Callable<String> downloader = new Callable<String>() {
+                @Override
+                public String call() throws Exception {
+                    return downloadAndHash(docUrl, options);
+                }
+            };
             if (canCache) {
-                return Response.status(Response.Status.TEMPORARY_REDIRECT).location(buildPdfURI(info, this.cache.getUnchecked(docUrl))).build();
+                String sha = this.cache.get(docUrl, downloader);
+                return Response.status(Response.Status.TEMPORARY_REDIRECT).location(buildPdfURI(info, sha)).build();
             }
             else {
                 // The main reason for using this cache is to allow time for the file to be
                 // downloaded by the client - it will be deleted when the entry expires.
-                String sha = this.tempCache.getUnchecked(docUrl);
-                tempCache.put(docUrl, sha);
+                String sha = this.tempCache.get(docUrl, downloader);
+
                 return respondWithPDF(sha);
             }
-        } catch (UncheckedExecutionException e) {
+        } catch (Exception e) {
             if (e.getCause() instanceof WebApplicationException) throw (WebApplicationException) e.getCause();
             else {
                 log.warn("Caught unexpected exception while trying to generate pdf for {}", docUrl, e);
@@ -111,7 +107,7 @@ public class PdfResource implements RemovalListener<String, String> {
         }
     }
 
-    String downloadAndHash(String docUrl) {
+    String downloadAndHash(String docUrl, String options) {
 
         HttpGet get = null;
 
@@ -126,7 +122,7 @@ public class PdfResource implements RemovalListener<String, String> {
 
                 try (InputStream it = responseEntity.getContent()) {
                     if (ContentType.TEXT_HTML.getMimeType().equals(contentType.getMimeType())) {
-                        hash = service.hashAndConvertHtml(docUrl, it);
+                        hash = service.hashAndConvertHtml(docUrl, options, it);
                     } else {
                         hash = service.hashAndConvertDocument(it);
                     }

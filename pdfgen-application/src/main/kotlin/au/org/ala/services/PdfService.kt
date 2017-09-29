@@ -71,7 +71,7 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
         }
     }
 
-    fun hashAndConvertHtml(url: String, stream: InputStream): String {
+    fun hashAndConvertHtml(url: String, options: String, stream: InputStream): String {
         val outDir = Files.createTempDir()
         try {
             log.debug("Created temp dir $outDir")
@@ -82,7 +82,12 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
 
             val outputFile = File(outDir, "${tempFile.name}.pdf")
 
-            val conversionProcessCommand = ProcessBuilder(htmltopdfExec, "--javascript-delay", "10000", url, outputFile.toString())
+            var command = mutableListOf(htmltopdfExec, "--javascript-delay", "10000")
+            if (!options.isNullOrEmpty()) {
+                 command.addAll(options.split(" "))
+            }
+            command.addAll(listOf(url, outputFile.toString()))
+            val conversionProcessCommand = ProcessBuilder(command)
             convertToPDF(hashString, tempFile, outputFile, conversionProcessCommand)
             return hashString
         } finally {
