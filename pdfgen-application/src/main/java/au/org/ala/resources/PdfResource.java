@@ -70,14 +70,15 @@ public class PdfResource implements RemovalListener<String, String> {
                     return downloadAndHash(docUrl, options);
                 }
             };
+            String key = docUrl+options;
             if (canCache) {
-                String sha = this.cache.get(docUrl, downloader);
+                String sha = this.cache.get(key, downloader);
                 return Response.status(Response.Status.TEMPORARY_REDIRECT).location(buildPdfURI(info, sha)).build();
             }
             else {
                 // The main reason for using this cache is to allow time for the file to be
                 // downloaded by the client - it will be deleted when the entry expires.
-                String sha = this.tempCache.get(docUrl, downloader);
+                String sha = this.tempCache.get(key, downloader);
 
                 return respondWithPDF(sha);
             }
