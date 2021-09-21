@@ -21,9 +21,13 @@ import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Path("pdf")
 public class PdfResource implements RemovalListener<String, String> {
@@ -38,11 +42,14 @@ public class PdfResource implements RemovalListener<String, String> {
 
     private final Cache<String, String> tempCache;
 
-    public PdfResource(HttpClient client, PdfService service, String urlCacheSpec) {
+    private Pattern hostMatchingPattern;
+
+    public PdfResource(HttpClient client, PdfService service, String urlCacheSpec, String hostRegexp) {
         this.client = client;
         this.service = service;
         this.cache = CacheBuilder.from(urlCacheSpec).removalListener(this).build();
         this.tempCache = CacheBuilder.newBuilder().expireAfterWrite(5, TimeUnit.MINUTES).removalListener(this).build();
+        this.hostMatchingPattern = Pattern.compile(hostRegexp);
     }
 
     @Override
@@ -61,7 +68,8 @@ public class PdfResource implements RemovalListener<String, String> {
     @GET
     public Response generate(@QueryParam("docUrl") final String docUrl, @Context UriInfo info, @QueryParam("cacheable") String cacheable, final @QueryParam("options") @DefaultValue("") String options) {
 
-        if (docUrl == null) throw new WebApplicationException(400);
+        if (!validateUrl(docUrl)) throw new WebApplicationException(400);
+
         boolean canCache = cacheable != null ? Boolean.valueOf(cacheable) : true;
         try {
             Callable<String> downloader = new Callable<String>() {
@@ -89,6 +97,26 @@ public class PdfResource implements RemovalListener<String, String> {
                 throw new WebApplicationException(500);
             }
         }
+    }
+
+    /**
+     * Ensures the supplied url is not null, is well formed, and the host matches a regexp
+     * @return true if the callback URL is valid.
+     */
+    private boolean validateUrl(String url) {
+        boolean valid = false;
+        if (url != null) {
+
+            try {
+                URI uri = new URL(url).toURI();
+                String host = uri.getHost();
+                Matcher matcher = hostMatchingPattern.matcher(host);
+                valid = matcher.matches();
+            } catch (Exception e) {
+                // We can ignore this and return false
+            }
+        }
+        return valid;
     }
 
     @Timed

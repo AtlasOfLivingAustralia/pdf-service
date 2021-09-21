@@ -55,11 +55,12 @@ class PdfGen : Application<PdfGenConfiguration>() {
 
         val storageDir = ensureStorageDir(config.storageDir)
         log.info("Using ${storageDir.absolutePath} for PDF storage")
+        log.info("Using ${config.htmltopdfPath} for html to pdf conversion")
 
         val httpClient = HttpClientBuilder(environment).using(config.httpClientConfiguration).build("httpClient")
         val service = PdfService(config.sofficePath, config.htmltopdfPath, storageDir)
         //environment.jersey().register(KtPdfResource(httpClient, service, config.urlCacheSpec))
-        environment.jersey().register(PdfResource(httpClient, service, config.urlCacheSpec))
+        environment.jersey().register(PdfResource(httpClient, service, config.urlCacheSpec, config.hostRegexp))
 
     }
 

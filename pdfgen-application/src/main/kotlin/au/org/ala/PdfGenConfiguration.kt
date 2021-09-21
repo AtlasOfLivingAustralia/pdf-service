@@ -23,4 +23,5 @@ class PdfGenConfiguration : Configuration() {
 
     @Valid @NotNull @JsonProperty("httpClient") val httpClientConfiguration: HttpClientConfiguration = HttpClientConfiguration()
 
+    @NotEmpty @JsonProperty var hostRegexp: String = ".*\\.ala\\.org\\.au"
 }

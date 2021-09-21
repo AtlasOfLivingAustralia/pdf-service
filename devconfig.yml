@@ -1,7 +1,7 @@
 sofficePath: /Applications/LibreOffice.app/Contents/MacOS/soffice
-htmltopdfPath: wkhtmltopdf
+htmltopdfPath: docker run --rm -v /data/pdfs:/converted/ --add-host devt.ala.org.au:192.168.65.2 arachnysdocker/athenapdf athenapdf --delay=10000
 #sofficePath: /usr/bin/soffice
-storageDir: pdfs
+storageDir: /data/pdfs
 
 server:
   type: simple
