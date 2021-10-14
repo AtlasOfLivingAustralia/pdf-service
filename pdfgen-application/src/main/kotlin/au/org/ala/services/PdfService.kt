@@ -83,7 +83,10 @@ class PdfService(val loExec: String, val htmltopdfExec: String, val storageDir: 
             var command = mutableListOf<String>()
             command.addAll(htmltopdfExec.split(" "))
             if (!options.isNullOrEmpty()) {
-                 command.addAll(options.split(" "))
+                // This is to keep compatibility with the wkhtmltopdf landscape option
+                if (options.contains("landscape")) {
+                    command.add("--no-portrait")
+                }
             }
             command.addAll(listOf(url, outputFile.name))
             val conversionProcessCommand = ProcessBuilder(command)
