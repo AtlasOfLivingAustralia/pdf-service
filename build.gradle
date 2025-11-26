@@ -1,6 +1,6 @@
 buildscript {
     ext {
-        kotlinVersion = '1.3.72'
+        kotlinVersion = '1.9.23'
     }
     repositories {
         jcenter()
@@ -9,10 +9,15 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
-        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
         classpath 'se.transmode.gradle:gradle-docker:1.2'
     }
 }
+
+plugins {
+    id("com.gradleup.shadow") version "9.2.2"
+}
+apply plugin: 'application'
+apply plugin: 'docker'
 
 allprojects {
     apply plugin: 'java'
@@ -22,7 +27,7 @@ allprojects {
     }
     group = 'au.org.ala'
     version = '1.3'
-    sourceCompatibility = 1.7
+    sourceCompatibility = 11
 
     repositories {
         jcenter()
@@ -31,18 +36,18 @@ allprojects {
     }
 
     dependencies {
-        compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
-        compile "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-        compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+"
+        implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+        implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
+        implementation "com.fasterxml.jackson.module:jackson-module-kotlin:2.11.+"
     }
   
 }
 
 project(':pdfgen-application') {
     dependencies {
-        compile "io.dropwizard:dropwizard-core:$dropwizardVersion"
-        compile "io.dropwizard:dropwizard-client:$dropwizardVersion"
-        compile "io.dropwizard:dropwizard-forms:$dropwizardVersion"
+        implementation "io.dropwizard:dropwizard-core:$dropwizardVersion"
+        implementation "io.dropwizard:dropwizard-client:$dropwizardVersion"
+        implementation "io.dropwizard:dropwizard-forms:$dropwizardVersion"
 
         testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
         testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
@@ -54,9 +59,7 @@ project(':pdfgen-application') {
     }
 }
 
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'docker'
+
 
 mainClassName = 'au.org.ala.PdfGen'
 
@@ -65,7 +68,7 @@ def devconfig = 'devconfig.yml'
 run { args 'server', devconfig }
 
 dependencies {
-    compile project(':pdfgen-application')
+    implementation project(':pdfgen-application')
 }
 
 shadowJar {
@@ -92,7 +95,7 @@ publishing {
     publications {
         mavenJar(MavenPublication) {
 
-            def shadowFile = file("$libsDir/$project.name-$project.version-all.jar")
+            def shadowFile = file("$buildDir/libs/$project.name-$project.version-all.jar")
             if (shadowFile.exists()) {
                 artifact(shadowFile) {
                     classifier 'all'
